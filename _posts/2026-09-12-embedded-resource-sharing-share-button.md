@@ -27,7 +27,7 @@ DRAFT — placeholders to confirm before publishing:
 - confirm the list of shipped consumer plugins.
 -->
 
-In [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/introducing-resource-sharing/), we described how the Security plugin brings owner-controlled, fine-grained sharing to plugin-defined resources such as anomaly detectors, ML models, and report definitions. That work also introduced a centralized **Resource Access Management (RAM)** page—a single place to review and manage everything shared with you or by you.
+In [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), we described how the Security plugin brings owner-controlled, fine-grained sharing to plugin-defined resources such as anomaly detectors, ML models, and report definitions. That work also introduced a centralized **Resource Access Management (RAM)** page—a single place to review and manage everything shared with you or by you.
 
 A central page is the right home for managing sharing at scale, but it isn't always where you *think* about sharing. When you are looking at a list of detectors, the most natural moment to share one is right there, next to it—not after navigating away to a separate page. So the next step was to bring the sharing experience to wherever a resource already lives in OpenSearch Dashboards.
 
@@ -150,7 +150,7 @@ If you already use resource sharing, the Share button will start appearing inlin
 
 To learn more:
 
-* [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/introducing-resource-sharing/)
+* [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/)
 * Resource sharing and access control documentation on [docs.opensearch.org](https://docs.opensearch.org/)
 
 We would love your feedback on the [OpenSearch forum](https://forum.opensearch.org/) and welcome contributions—if your plugin introduces a shareable resource type, adding the Share button is one of the easiest ways to get involved.
