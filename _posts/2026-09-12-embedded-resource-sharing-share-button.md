@@ -8,7 +8,7 @@ date: 2026-09-12
 categories:
   - technical-post
 meta_keywords: security, resource sharing, access control, dashboards, share button, extensibility, plugins, authorization
-meta_description: "Learn how OpenSearch Dashboards plugins can surface the centralized resource sharing Share button directly in their own pages with a single DOM marker—no plugin dependency, no imports, and no manifest changes."
+meta_description: "Learn how, in OpenSearch 3.9, OpenSearch Dashboards plugins can surface the centralized resource sharing Share button directly in their own pages with a single DOM marker—no plugin dependency, no imports, and no manifest changes."
 tags:
   - security
   - access control
@@ -17,21 +17,32 @@ tags:
   - anomaly detection
   - ml commons
   - security analytics
+  - opensearch 3.9
 ---
 
 <!--
-DRAFT — placeholders to confirm before publishing:
+DRAFT — remaining items to confirm before publishing:
 - date: set to the intended publish date (filename must match).
-- OpenSearch/Dashboards version referenced below (currently "a recent release").
 - authors list.
-- confirm the list of shipped consumer plugins.
+- add screenshot at assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/share-button.png
+  (referenced in "See it in action"); optionally share-modal.png / ram-page.png.
 -->
 
 In [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), we described how the Security plugin brings owner-controlled, fine-grained sharing to plugin-defined resources such as anomaly detectors, ML models, and report definitions. That work also introduced a centralized **Resource Access Management (RAM)** page—a single place to review and manage everything shared with you or by you.
 
 A central page is the right home for managing sharing at scale, but it isn't always where you *think* about sharing. When you are looking at a list of detectors, the most natural moment to share one is right there, next to it—not after navigating away to a separate page. So the next step was to bring the sharing experience to wherever a resource already lives in OpenSearch Dashboards.
 
-This post introduces the **embedded resource sharing Share button**: a single, centralized Share control that any OpenSearch Dashboards plugin can drop into its own pages—a table row, a page header, a details flyout—with **no dependency on the Security plugin, no imports, and no manifest changes**.
+This post introduces the **embedded resource sharing Share button**, available in OpenSearch 3.9: a single, centralized Share control that any OpenSearch Dashboards plugin can drop into its own pages—a table row, a page header, a details flyout—with **no dependency on the Security plugin, no imports, and no manifest changes**.
+
+---
+
+## See it in action
+
+![The resource sharing Share button embedded inline in a resource list](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/share-button.png)
+
+Here the Share button sits right in the resource list; selecting it opens the same access modal used everywhere else in OpenSearch Dashboards. You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8), from [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491).
+
+The button is also multiple data sources (MDS)–aware: pass the data source id and it targets the correct cluster in multi-cluster deployments. See [security-dashboards-plugin#2520](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520) and its [demo video](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520#issuecomment-5611229423).
 
 ---
 
@@ -147,6 +158,8 @@ Because the pattern is dependency-free, any future plugin that introduces a shar
 ## Try it out
 
 If you already use resource sharing, the Share button will start appearing inline as consumer plugins adopt the marker—no configuration required beyond enabling resource sharing on the cluster. To manage everything in one place, the centralized Resource Access Management page remains available in OpenSearch Dashboards.
+
+![The central Resource Access Management page, showing a shared anomaly detector and its access level](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/ram-page.png)
 
 To learn more:
 
