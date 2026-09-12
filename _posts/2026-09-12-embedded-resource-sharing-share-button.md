@@ -24,8 +24,8 @@ tags:
 DRAFT — remaining items to confirm before publishing:
 - date: set to the intended publish date (filename must match).
 - authors list.
-- add screenshot at assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/share-button.png
-  (referenced in "See it in action"); optionally share-modal.png / ram-page.png.
+- add screenshots at assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/:
+  access-column.png and access-modal.png (referenced in "See it in action").
 -->
 
 In [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), we described how the Security plugin brings owner-controlled, fine-grained sharing to plugin-defined resources such as anomaly detectors, ML models, and report definitions. That work also introduced a centralized **Resource Access Management (RAM)** page—a single place to review and manage everything shared with you or by you.
@@ -38,9 +38,13 @@ This post introduces the **embedded resource sharing Share button**, available i
 
 ## See it in action
 
-![The resource sharing Share button embedded inline in a resource list](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/share-button.png)
+![The resource sharing Share button in the Access column of a resource list](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-column.png)
 
-Here the Share button sits right in the resource list; selecting it opens the same access modal used everywhere else in OpenSearch Dashboards. You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8), from [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491).
+The Share button sits right in the **Access** column of a resource list. Selecting it opens the same access modal used everywhere else in OpenSearch Dashboards:
+
+![The resource sharing access modal for managing who a resource is shared with](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-modal.png)
+
+You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8), from [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491).
 
 The button is also multiple data sources (MDS)–aware: pass the data source id and it targets the correct cluster in multi-cluster deployments. See [security-dashboards-plugin#2520](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520) and its [demo video](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520#issuecomment-5611229423).
 
