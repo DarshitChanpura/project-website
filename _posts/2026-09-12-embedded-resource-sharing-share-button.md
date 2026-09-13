@@ -2,7 +2,6 @@
 layout: post
 title: "Share from any page: bringing the resource sharing button into OpenSearch Dashboards"
 authors:
-  - cwperks
   - dchanp
 date: 2026-09-12
 categories:
