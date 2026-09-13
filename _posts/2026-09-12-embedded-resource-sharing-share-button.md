@@ -19,7 +19,7 @@ tags:
   - opensearch 3.9
 ---
 
-Sharing a resource in OpenSearch Dashboards used to mean leaving whatever you were doing: open the central Resource Access Management app, pick the resource type, and find your resource in a table. In OpenSearch 3.9, you can skip that detour and share a resource right from the page it already lives on.
+Sharing a resource in OpenSearch Dashboards used to mean leaving the page you were on: open the central Resource Access Management app, select the resource type, and find your resource in a table. In OpenSearch 3.9, you can skip that detour and share a resource directly from the page where it already lives.
 
 The [resource sharing framework]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/) introduced in an earlier post answered *who can access what* for plugin-defined resources such as anomaly detectors, ML models, and report definitions. This post is about *where* you do the sharing: an embedded **Share button** that shows up wherever a resource already lives—a table row, a page header, a details flyout—and that a plugin can adopt with a single line of markup and no dependency on the Security plugin.
 
@@ -43,14 +43,14 @@ You can also [watch a short screen recording of the Share button in action](http
 
 The backend already had a clean extension point: a plugin registers its resource types with the Security plugin, and the framework takes care of authorization, sharing records, and auditing. The UI was the missing half.
 
-The goal was easy to state and annoying to satisfy: every plugin that owns shareable resources should offer the *same* sharing experience—same button, same modal, same private-or-shared status, same permission checks—without taking a dependency on the Security plugin. Security is optional in OpenSearch. A cluster might run without it, or with resource sharing turned off, and every plugin has to keep working either way.
+The goal was simple to state but harder to satisfy: every plugin that owns shareable resources should offer the *same* sharing experience—the same button, modal, private-or-shared status, and permission checks—without taking a dependency on the Security plugin. Security is optional in OpenSearch: a cluster might run without it, or with resource sharing turned off, and every plugin has to keep working either way.
 
-Two obvious designs didn't hold up:
+Two obvious designs fell short:
 
-* A **shared React component** would make every consumer import from, and depend on, the Security plugin—and break builds on clusters where security isn't installed.
-* A **registry or service** that plugins call at startup still means a dependency and some lifecycle choreography.
+* A **shared React component** would require every consumer to import from, and depend on, the Security plugin, breaking builds on clusters where security isn't installed.
+* A **registry or service** that plugins call at startup still requires a dependency and careful lifecycle coordination.
 
-What held up was a design with no coupling at all: the consumer decides where the button goes, and the button quietly doesn't render when security or resource sharing isn't there.
+The approach that held up avoids coupling entirely: the consumer decides where the button goes, and the button does not render when security or resource sharing is unavailable.
 
 ---
 
@@ -79,7 +79,7 @@ When the Security plugin is present and resource sharing is enabled, it does the
 2. Mounts the Share button into each one and wires up the sharing record, access levels, and permission checks.
 3. Watches for markers that appear, change, or disappear (using a `MutationObserver`) as you page through tables and move around the application.
 
-The consumer never imports the Security plugin's APIs, and the Security plugin never learns anything about the consumer: the DOM is the entire interface. Rendering one button per row stays cheap, too—the buttons on a page coalesce their lookups into a single request instead of each fetching on its own.
+The consumer never imports the Security plugin's APIs, and the Security plugin never learns anything about the consumer: the DOM is the entire interface. Rendering one button per row remains inexpensive, because the buttons on a page coalesce their lookups into a single request rather than each issuing its own.
 
 ### The marker contract
 
@@ -138,15 +138,17 @@ Two things worth knowing from wiring this up across plugins:
 
 ## Plugins that support the Share button today
 
-Not every plugin has shareable resources, but the ones that do are already onboarded. The embedded Share button is live in the following plugins:
+Not every plugin manages shareable resources, but the ones that do are already onboarded. The embedded Share button is available in the following plugins:
 
-* The **Reporting plugin** (report definitions and reports)
-* The **Notifications plugin** (channels)
-* The **Security Analytics plugin** (detectors and correlation rules)
+* The **Alerting plugin** (monitors and composite monitors)
 * The **Anomaly Detection plugin** (detectors and forecasters)
+* The **Flow Framework plugin** (workflows)
 * The **ML Commons plugin** (model groups)
+* The **Notifications plugin** (channels)
+* The **Reporting plugin** (report definitions and reports)
+* The **Security Analytics plugin** (detectors and correlation rules)
 
-Because there's no dependency to take on, any future plugin with a shareable resource type can join this list with the same one-line change.
+Because there is no dependency to adopt, any future plugin that introduces a shareable resource type can join this list with the same one-line change.
 
 ---
 
@@ -157,4 +159,4 @@ If your cluster already uses resource sharing, the Share button shows up inline 
 * [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/)
 * [Resource sharing and access control documentation](https://docs.opensearch.org/)
 
-If your plugin owns shareable resources, wiring up the Share button is about as small as an OpenSearch integration gets—and it makes a great first contribution. We'd welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
+If your plugin manages shareable resources, adding the Share button is one of the smallest integrations in OpenSearch and a good first contribution. We welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
