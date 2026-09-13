@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Share from any page: the embedded resource sharing button in OpenSearch Dashboards"
+title: "Share without the detour: embedding the resource sharing button in OpenSearch Dashboards"
 authors:
   - dchanp
 date: 2026-09-12
@@ -19,50 +19,48 @@ tags:
   - opensearch 3.9
 ---
 
-In this blog post, you'll learn how OpenSearch 3.9 lets you share a resource from the page you're already on—no detour to a separate screen required.
+Sharing a resource in OpenSearch Dashboards used to mean leaving whatever you were doing: open the central Resource Access Management app, pick the resource type, and find your resource in a table. In OpenSearch 3.9, you can skip that detour and share a resource right from the page it already lives on.
 
-In [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), we introduced owner-controlled, fine-grained sharing for plugin-defined resources such as anomaly detectors, ML models, and report definitions. That framework answered the question of *who can access what*. This post is about *where* you do the sharing.
-
-When you're looking at a list of detectors, the most natural moment to share one is right there, next to it—not after navigating to a separate screen. The embedded **resource sharing Share button** puts the sharing experience wherever a resource already lives in OpenSearch Dashboards: a table row, a page header, or a details flyout. And for the plugins that own those resources, adding it takes a single line—with no dependency on the Security plugin, no imports, and no manifest changes.
+The [resource sharing framework]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/) introduced in an earlier post answered *who can access what* for plugin-defined resources such as anomaly detectors, ML models, and report definitions. This post is about *where* you do the sharing: an embedded **Share button** that shows up wherever a resource already lives—a table row, a page header, a details flyout—and that a plugin can adopt with a single line of markup and no dependency on the Security plugin.
 
 ---
 
 ## See it in action
 
-The following image shows the Share button in the **Access** column of a resource list, where each row also shows whether the resource is private or shared:
+The following image shows the Share button in the **Access** column of a resource list. Each row also shows whether the resource is private or shared, so you can read the sharing state at a glance:
 
 ![The resource sharing Share button in the Access column of a resource list](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-column.png)
 
-Selecting the button opens the same access modal used throughout OpenSearch Dashboards, so the experience is identical no matter which plugin you're in:
+Selecting the button opens the same access modal that the central app uses, so the flow is identical no matter which plugin you're in:
 
 ![The resource sharing access modal for managing who a resource is shared with](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-modal.png)
 
-You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8), from [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491). The button is also aware of multiple data sources (MDS): pass a data source ID and it targets the correct cluster in multi-cluster deployments, as shown in [security-dashboards-plugin#2520](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520) and its [demo video](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520#issuecomment-5611229423).
+You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8), from [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491). The button is data-source aware, too: pass a data source ID and it targets the correct cluster in a multiple data sources (MDS) deployment, as shown in [security-dashboards-plugin#2520](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520) and its [demo video](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520#issuecomment-5611229423).
 
 ---
 
 ## One experience, without coupling every plugin to security
 
-The resource sharing backend already had a clean extension point: plugins register their resource types with the Security plugin, and the framework handles authorization, sharing records, and auditing. The open question was the UI.
+The backend already had a clean extension point: a plugin registers its resource types with the Security plugin, and the framework takes care of authorization, sharing records, and auditing. The UI was the missing half.
 
-We wanted every plugin that manages shareable resources to offer the same sharing experience—the same button, the same modal, the same private or shared status, and the same permission checks. But there was a hard constraint: a consumer plugin shouldn't have to take a build-time or runtime dependency on the Security plugin. Security is optional in OpenSearch—a cluster may run without it, or with resource sharing disabled—and every plugin has to keep working in all of those configurations.
+The goal was easy to state and annoying to satisfy: every plugin that owns shareable resources should offer the *same* sharing experience—same button, same modal, same private-or-shared status, same permission checks—without taking a dependency on the Security plugin. Security is optional in OpenSearch. A cluster might run without it, or with resource sharing turned off, and every plugin has to keep working either way.
 
-Two obvious approaches fell short:
+Two obvious designs didn't hold up:
 
-* A **shared React component** would force every consumer to import from, and depend on, the Security plugin—breaking builds on clusters where security isn't present.
-* A **registry or service** that plugins call at startup still requires a dependency and careful lifecycle coordination.
+* A **shared React component** would make every consumer import from, and depend on, the Security plugin—and break builds on clusters where security isn't installed.
+* A **registry or service** that plugins call at startup still means a dependency and some lifecycle choreography.
 
-What we wanted instead was no coupling at all: the consumer owns placement, and the button simply isn't rendered when security or resource sharing is unavailable.
+What held up was a design with no coupling at all: the consumer decides where the button goes, and the button quietly doesn't render when security or resource sharing isn't there.
 
 ---
 
 ## How the DOM-marker SPI works
 
-The embedded Share button uses a **DOM-marker service provider interface (SPI)**. On the UI side, it mirrors the "implement the interface" philosophy that the backend already uses for resource types:
+The embedded Share button is delivered through a **DOM-marker service provider interface (SPI)**. It borrows the same idea the backend uses for resource types—*declare yourself, and the framework fulfills it*:
 
-> A plugin declares *where* it wants a Share button by rendering an empty marker element. The Security plugin discovers those markers and fills them in.
+> A plugin renders an empty marker element wherever it wants a Share button. The Security plugin finds those markers and mounts the button into them.
 
-A consumer renders an element with a few `data-` attributes (this example uses OpenSearch 3.9):
+A consumer renders an element with a few `data-` attributes (this example targets OpenSearch 3.9):
 
 ```jsx
 // In any OpenSearch Dashboards plugin — no imports or dependencies needed.
@@ -73,15 +71,15 @@ A consumer renders an element with a few `data-` attributes (this example uses O
 />
 ```
 
-That's the whole contract, and it works just as well in a table cell, a page header, or a flyout.
+That's the whole contract, and it behaves the same in a table cell, a page header, or a flyout.
 
 When the Security plugin is present and resource sharing is enabled, it does the following:
 
-1. Scans the page for elements that carry the `data-resource-share-button` marker.
-2. Mounts the centralized Share button into each one, wiring up the sharing record, access levels, and permission checks.
+1. Scans the page for elements carrying the `data-resource-share-button` marker.
+2. Mounts the Share button into each one and wires up the sharing record, access levels, and permission checks.
 3. Watches for markers that appear, change, or disappear (using a `MutationObserver`) as you page through tables and move around the application.
 
-Because discovery happens entirely through the DOM, the consumer needs no knowledge of the Security plugin's APIs, and the Security plugin needs no knowledge of the consumer.
+The consumer never imports the Security plugin's APIs, and the Security plugin never learns anything about the consumer: the DOM is the entire interface. Rendering one button per row stays cheap, too—the buttons on a page coalesce their lookups into a single request instead of each fetching on its own.
 
 ### The marker contract
 
@@ -101,19 +99,19 @@ The following attributes control the button:
 
 ## What happens when security is disabled
 
-Because the Security plugin fills in the button only when it applies, the feature degrades gracefully:
+Because the Security plugin fills in a marker only when the marker applies, the feature degrades gracefully instead of erroring:
 
-* **Security is absent, or resource sharing is disabled**: the marker stays empty, so the consumer renders nothing extra and behaves exactly as before.
+* **Security is absent, or resource sharing is disabled**: the marker stays inert, so the consumer renders nothing extra and behaves exactly as before.
 * **The resource type isn't registered for sharing**: the mounted button hides itself.
-* **You don't have share permission**: the button appears in a disabled state that explains why.
+* **You don't have permission to share**: the button appears disabled, with a tooltip that explains why.
 
-There's nothing for the consumer to feature-flag or conditionally import—the same code path works with and without security.
+There's nothing to feature-flag and nothing to conditionally import—the same code path runs with or without security.
 
 ---
 
 ## Adding the button to a resource list
 
-The most common place to surface sharing is a resource list, and that's usually a single conditional column that renders the marker in `icon` mode:
+The most common place to surface sharing is a resource list, which usually comes down to one conditional column that renders the marker in `icon` mode:
 
 ```jsx
 {
@@ -131,16 +129,16 @@ The most common place to surface sharing is a resource list, and that's usually 
 }
 ```
 
-Two tips from adopting this across plugins:
+Two things worth knowing from wiring this up across plugins:
 
-* For dense list tables, use `icon` display and let the table size the column to its content. In EUI's `EuiInMemoryTable` and `EuiBasicTable`, setting `tableLayout="auto"` keeps a compact, fixed-width column from clipping the button.
+* For dense tables, use `icon` display and let the table size the column to its content. In EUI's `EuiInMemoryTable` and `EuiBasicTable`, `tableLayout="auto"` keeps a narrow, fixed-width column from clipping the button.
 * Add the column only when the resource type is registered for sharing, so the UI stays clean on clusters where the feature is off.
 
 ---
 
 ## Plugins that support the Share button today
 
-Not every plugin manages shareable resources, but the ones that do are already onboarded. The embedded Share button appears in these plugins, each with a single-line marker:
+Not every plugin has shareable resources, but the ones that do are already onboarded. The embedded Share button is live in the following plugins:
 
 * The **Reporting plugin** (report definitions and reports)
 * The **Notifications plugin** (channels)
@@ -148,15 +146,15 @@ Not every plugin manages shareable resources, but the ones that do are already o
 * The **Anomaly Detection plugin** (detectors and forecasters)
 * The **ML Commons plugin** (model groups)
 
-Because the pattern is dependency-free, any future plugin that introduces a shareable resource type can adopt the button with the same one-line change.
+Because there's no dependency to take on, any future plugin with a shareable resource type can join this list with the same one-line change.
 
 ---
 
 ## Next steps
 
-If your cluster already uses resource sharing, the Share button appears inline as these plugins adopt the marker—no configuration is required beyond enabling resource sharing. To learn more, see the following resources:
+If your cluster already uses resource sharing, the Share button shows up inline as these plugins adopt the marker—no extra configuration beyond enabling resource sharing. To go deeper, see the following resources:
 
 * [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/)
 * [Resource sharing and access control documentation](https://docs.opensearch.org/)
 
-If your plugin manages shareable resources, adding the Share button is one of the easiest ways to contribute. We'd welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
+If your plugin owns shareable resources, wiring up the Share button is about as small as an OpenSearch integration gets—and it makes a great first contribution. We'd welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
