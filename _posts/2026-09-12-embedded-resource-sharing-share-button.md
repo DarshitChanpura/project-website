@@ -1,13 +1,13 @@
 ---
 layout: post
-title: "Share without the detour: embedding the resource sharing button in OpenSearch Dashboards"
+title: "Managing resource access from a plugin page in OpenSearch Dashboards"
 authors:
   - dchanp
 date: 2026-09-12
 categories:
   - technical-post
-meta_keywords: security, resource sharing, access control, dashboards, share button, extensibility, plugins, authorization
-meta_description: "Learn how, in OpenSearch 3.9, OpenSearch Dashboards plugins can surface the centralized resource sharing Share button directly in their own pages—so you can share a resource without leaving the page it lives on."
+meta_keywords: resource sharing, access control, security, OpenSearch Dashboards, anomaly detection, alerting, authorization
+meta_description: "Learn how OpenSearch 3.9 lets you share resources from the plugin page that lists the resource, and how a plugin adds those controls without depending on the Security plugin."
 tags:
   - security
   - access control
@@ -19,37 +19,43 @@ tags:
   - opensearch 3.9
 ---
 
-Sharing a resource in OpenSearch Dashboards used to mean leaving the page you were on: open the central Resource Access Management app, select the resource type, and find your resource in a table. In OpenSearch 3.9, you can skip that detour and share a resource directly from the page where it already lives.
+New in OpenSearch 3.9, you can share resources from the plugin page that already lists the resource instead of from the **Resource Access Management** page. You can review the sharing state of every detector, monitor, or model group in the list you are already reading and change it without navigating away.
 
-The [resource sharing framework]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/) introduced in an earlier post answered *who can access what* for plugin-defined resources such as anomaly detectors, ML models, and report definitions. This post is about *where* you do the sharing: an embedded **Share button** that shows up wherever a resource already lives—a table row, a page header, a details flyout.
+The [resource sharing framework]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), introduced in OpenSearch 3.3, determines who can access a plugin-defined resource and at what access level. This post describes the OpenSearch Dashboards controls that expose that framework on plugin pages and, for plugin developers, how a plugin adds those controls without depending on the Security plugin.
 
----
+## Sharing a resource where you find it
 
-## See it in action
+When resource sharing is enabled, a resource list shows whether each resource is private or shared and gives you a control to change it. The following image shows this in the Anomaly Detection detector list.
 
-The following image shows the Share button in the **Access** column of a resource list. Each row also shows whether the resource is private or shared, so you can read the sharing state at a glance:
+![Detector list with an Access column showing Private and Shared states and a share icon on each row the user can share](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-column.png)
 
-![The resource sharing Share button in the Access column of a resource list](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-column.png)
+Selecting the share icon opens a dialog for managing access to that resource. You can share the resource with users, roles, or backend roles at one or more access levels, or make it private again. The following image shows a detector shared with one user at the **Read only** access level.
 
-Selecting the button opens the same access modal that the central app uses, so the flow is identical no matter which plugin you're in:
+![Manage access dialog for an anomaly detector, showing a Read only access level shared with one user and a Remove all sharing section](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-modal.png)
 
-![The resource sharing access modal for managing who a resource is shared with](/assets/media/blog-images/2026-09-12-embedded-resource-sharing-share-button/access-modal.png)
+The dialog works the same way in every plugin, though the available access levels come from the plugin that owns the resource: Anomaly Detection defines the levels for detectors, and ML Commons defines a different set for model groups. For the full procedure, see [Managing access from a plugin page](https://docs.opensearch.org/latest/dashboards/management/resource-sharing/#managing-access-from-a-plugin-page).
 
-You can also [watch a short screen recording of the Share button in action](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8). The button is data-source aware, too: in a multiple data sources (MDS) deployment, it targets the cluster you're working in, as shown in [this demo](https://github.com/opensearch-project/security-dashboards-plugin/pull/2520#issuecomment-5611229423).
+To view the complete flow, [watch a short video](https://github.com/user-attachments/assets/d659a14c-864e-4fc4-9fb5-9ec1de2bf4a8).
 
----
+## Resources you can share from a plugin page
 
-## The same experience in every plugin
+The following plugins support sharing from their resource lists:
 
-Every plugin that owns shareable resources shows the same Share button and opens the same access modal, so sharing works the same way whether you're in the Anomaly Detection plugin, the Reporting plugin, or the Security Analytics plugin. There's one place to learn, and it behaves consistently everywhere.
+* **Alerting**: monitors and workflows
+* **Anomaly Detection**: detectors and forecasters
+* **Flow Framework**: workflows
+* **ML Commons**: model groups
+* **Notifications**: channels
+* **Reporting**: report definitions and reports
+* **Security Analytics**: detectors and correlation rules
 
-Just as important is what happens when security *isn't* in the picture. Security is optional in OpenSearch—a cluster can run without it, or with resource sharing turned off—so the button was designed to require no dependency on the Security plugin at all. It appears when resource sharing is available and stays out of the way when it isn't, with nothing for a plugin to configure or turn on.
+The sharing controls appear only after an administrator enables resource sharing for the resource type. Otherwise, these lists are unchanged.
 
----
+## Why the controls don't require the Security plugin
 
-## How a plugin adds it
+The Security plugin is optional in OpenSearch. A cluster can run without it, and a cluster that runs it can still leave resource sharing disabled. If each plugin imported the sharing controls directly, every plugin would need its own handling for the Security plugin's absence.
 
-Adoption is deliberately small. A plugin marks the spot where it wants the button by rendering a placeholder element:
+Instead, a plugin marks where the controls belong and renders nothing else:
 
 ```jsx
 <div
@@ -59,33 +65,18 @@ Adoption is deliberately small. A plugin marks the spot where it wants the butto
 />
 ```
 
-That's the whole integration—no imports, no plugin dependency, and no manifest changes. When the Security plugin is present and resource sharing is enabled, it finds these placeholders and fills in the button, wiring up the sharing state and permission checks. The idea mirrors how the resource sharing backend already works: *declare yourself, and the framework fulfills it*. When security is absent, the feature is turned off, or you don't have permission to share, the button simply doesn't appear (or appears disabled, with a short explanation).
+When the Security plugin is installed and resource sharing is enabled, it finds these placeholders and renders the sharing control in each one, along with the permission check that determines who can use it. The plugin that owns the resource needs no import, no plugin dependency, and no manifest entry. On a cluster without the Security plugin, the placeholder renders as an empty `div`. This follows the same pattern as the resource sharing backend: a plugin registers its resource type, and the framework enforces access.
 
-Plugin authors can find the full set of options—a compact icon for table rows, multiple data sources support, and more—in [security-dashboards-plugin#2491](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491).
+The controls also resolve the data source from the page that renders them, so on a cluster configured with multiple data sources, sharing applies to the data source you selected.
 
----
-
-## Plugins that support the Share button today
-
-Not every plugin manages shareable resources, but the ones that do are already onboarded. The embedded Share button is available in the following plugins:
-
-* The **Alerting plugin** (monitors and composite monitors)
-* The **Anomaly Detection plugin** (detectors and forecasters)
-* The **Flow Framework plugin** (workflows)
-* The **ML Commons plugin** (model groups)
-* The **Notifications plugin** (channels)
-* The **Reporting plugin** (report definitions and reports)
-* The **Security Analytics plugin** (detectors and correlation rules)
-
-Because there is no dependency to adopt, any future plugin that introduces a shareable resource type can join this list with the same one-line change.
-
----
+For the available options, see [the resource sharing controls pull request](https://github.com/opensearch-project/security-dashboards-plugin/pull/2491) in the `security-dashboards-plugin` repository.
 
 ## Next steps
 
-If your cluster already uses resource sharing, the Share button shows up inline as these plugins adopt it—no extra configuration beyond enabling resource sharing. To go deeper, see the following resources:
+If your cluster already uses resource sharing, you can start sharing resources from the plugin pages listed in this post, with no additional configuration. To enable resource sharing, or to review the access levels that each plugin defines, see the following documentation:
 
-* [Introducing resource sharing: A new access control model for OpenSearch]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/)
-* [Resource sharing and access control documentation](https://docs.opensearch.org/)
+* [Resource access management](https://docs.opensearch.org/latest/dashboards/management/resource-sharing/) for the OpenSearch Dashboards procedures
+* [Resource sharing and access control](https://docs.opensearch.org/latest/security/access-control/resources/) for cluster settings and configuration
+* [Introducing resource sharing: A new access control model for OpenSearch](https://opensearch.org/blog/Introducing-Resource-Sharing/) for the underlying framework introduction
 
-If your plugin manages shareable resources, adding the Share button is one of the smallest integrations in OpenSearch and a good first contribution. We welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
+If your plugin owns a resource type that users need to share, adding the placeholder element is the only change required. We welcome your feedback on the [OpenSearch forum](https://forum.opensearch.org/).
