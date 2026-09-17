@@ -8,15 +8,6 @@ categories:
   - technical-post
 meta_keywords: resource sharing, access control, security, OpenSearch Dashboards, anomaly detection, alerting, authorization
 meta_description: "Learn how OpenSearch 3.9 lets you share resources from the plugin page that lists the resource, and how a plugin adds those controls without depending on the Security plugin."
-tags:
-  - security
-  - access control
-  - resource sharing
-  - dashboards
-  - anomaly detection
-  - ml commons
-  - security analytics
-  - opensearch 3.9
 ---
 
 New in OpenSearch 3.9, you can share resources from the plugin page that already lists the resource instead of from the **Resource Access Management** page. You can review the sharing state of every detector, monitor, or model group in the list you are already reading and change it without navigating away.
