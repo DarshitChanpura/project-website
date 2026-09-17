@@ -12,7 +12,7 @@ meta_description: "Learn how OpenSearch 3.9 lets you share resources from the pl
 
 New in OpenSearch 3.9, you can share resources from the plugin page that already lists the resource instead of from the **Resource Access Management** page. You can review the sharing state of every detector, monitor, or model group in the list you are already reading and change it without navigating away.
 
-The [resource sharing framework]({{ site.baseurl }}/blog/Introducing-Resource-Sharing/), introduced in OpenSearch 3.3, determines who can access a plugin-defined resource and at what access level. This post describes the OpenSearch Dashboards controls that expose that framework on plugin pages and, for plugin developers, how a plugin adds those controls without depending on the Security plugin.
+The [resource sharing framework](https://opensearch.org/blog/Introducing-Resource-Sharing/), introduced in OpenSearch 3.3, determines who can access a plugin-defined resource and at what access level. This post describes the OpenSearch Dashboards controls that expose that framework on plugin pages and, for plugin developers, how a plugin adds those controls without depending on the Security plugin.
 
 ## Sharing a resource where you find it
 
